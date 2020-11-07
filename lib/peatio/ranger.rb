@@ -50,6 +50,19 @@ module Peatio::Ranger
       begin
         data = JSON.parse(msg)
 
+        if !data["jwt"].to_s.empty?	
+          authorized, payload = authenticate(data["jwt"])	
+          if !authorized	
+            send :error, message: "Authentication failed."	
+            return	
+          end	
+          @logger.info [authorized, payload].inspect	
+          @client.user = payload[:uid]	
+          @client.authorized = true	
+          @logger.info "ranger: user #{@client.user} authenticated #{@client.streams}"	
+          send :success, message: "Authenticated."	
+        end
+
         case data["event"]
         when "subscribe"
           subscribe data["streams"]
